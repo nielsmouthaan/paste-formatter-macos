@@ -4,10 +4,15 @@ import Foundation
 
 @MainActor
 struct PasteActionExecutor {
+    private static var hasPromptedForAccessibility = false
+
     func executePaste() -> Bool {
         guard AXIsProcessTrusted() else {
-            let options = ["AXTrustedCheckOptionPrompt" as CFString: true] as CFDictionary
-            _ = AXIsProcessTrustedWithOptions(options)
+            if !Self.hasPromptedForAccessibility {
+                let options = ["AXTrustedCheckOptionPrompt" as CFString: true] as CFDictionary
+                _ = AXIsProcessTrustedWithOptions(options)
+                Self.hasPromptedForAccessibility = true
+            }
             return false
         }
 

@@ -6,6 +6,7 @@ final class HotKeyMonitor {
     private let signature = HotKeyMonitor.fourCharCode("CLNP")
     private let action: @MainActor () -> Void
 
+    private var currentShortcut: KeyboardShortcut?
     private var hotKeyReference: EventHotKeyRef?
     private var eventHandlerReference: EventHandlerRef?
 
@@ -13,35 +14,36 @@ final class HotKeyMonitor {
         self.action = action
     }
 
-    func start() {
-        guard hotKeyReference == nil else {
-            return
+    func start(with shortcut: KeyboardShortcut) {
+        installEventHandlerIfNeeded()
+        updateShortcut(shortcut)
+    }
+
+    @discardableResult
+    func updateShortcut(_ shortcut: KeyboardShortcut) -> Bool {
+        installEventHandlerIfNeeded()
+
+        if let hotKeyReference {
+            UnregisterEventHotKey(hotKeyReference)
+            self.hotKeyReference = nil
         }
 
-        var eventType = EventTypeSpec(
-            eventClass: OSType(kEventClassKeyboard),
-            eventKind: UInt32(kEventHotKeyPressed)
-        )
-
-        InstallEventHandler(
-            GetApplicationEventTarget(),
-            Self.hotKeyHandler,
-            1,
-            &eventType,
-            UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque()),
-            &eventHandlerReference
-        )
-
         let hotKeyID = EventHotKeyID(signature: signature, id: 1)
-        let modifiers = UInt32(controlKey) | UInt32(optionKey) | UInt32(cmdKey)
-        RegisterEventHotKey(
-            UInt32(kVK_ANSI_V),
-            modifiers,
+        let status = RegisterEventHotKey(
+            shortcut.keyCode,
+            shortcut.carbonModifiers,
             hotKeyID,
             GetApplicationEventTarget(),
             0,
             &hotKeyReference
         )
+
+        guard status == noErr else {
+            return false
+        }
+
+        currentShortcut = shortcut
+        return true
     }
 
     func stop() {
@@ -54,6 +56,8 @@ final class HotKeyMonitor {
             RemoveEventHandler(eventHandlerReference)
             self.eventHandlerReference = nil
         }
+
+        currentShortcut = nil
     }
 
     private static let hotKeyHandler: EventHandlerUPP = { _, event, userData in
@@ -92,5 +96,25 @@ final class HotKeyMonitor {
         string.utf8.reduce(0) { partialResult, byte in
             (partialResult << 8) + OSType(byte)
         }
+    }
+
+    private func installEventHandlerIfNeeded() {
+        guard eventHandlerReference == nil else {
+            return
+        }
+
+        var eventType = EventTypeSpec(
+            eventClass: OSType(kEventClassKeyboard),
+            eventKind: UInt32(kEventHotKeyPressed)
+        )
+
+        InstallEventHandler(
+            GetApplicationEventTarget(),
+            Self.hotKeyHandler,
+            1,
+            &eventType,
+            UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque()),
+            &eventHandlerReference
+        )
     }
 }

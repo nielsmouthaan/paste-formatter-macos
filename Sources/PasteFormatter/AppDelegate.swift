@@ -9,19 +9,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let settingsStore = SettingsStore()
         let pasteboardService = PasteboardService()
         let pasteExecutor = PasteActionExecutor()
+        let launchAtLoginService = LaunchAtLoginService()
 
-        let statusMenuController = StatusMenuController(
+        var statusMenuController: StatusMenuController?
+        let hotKeyMonitor = HotKeyMonitor {
+            statusMenuController?.performFormattedPaste()
+        }
+
+        let controller = StatusMenuController(
             settingsStore: settingsStore,
             pasteboardService: pasteboardService,
-            pasteExecutor: pasteExecutor
+            pasteExecutor: pasteExecutor,
+            launchAtLoginService: launchAtLoginService,
+            applyShortcut: { shortcut in
+                hotKeyMonitor.updateShortcut(shortcut)
+            }
         )
-        statusMenuController.start()
-        self.statusMenuController = statusMenuController
+        controller.start()
+        statusMenuController = controller
+        self.statusMenuController = controller
 
-        let hotKeyMonitor = HotKeyMonitor {
-            statusMenuController.performCleanPaste()
-        }
-        hotKeyMonitor.start()
+        hotKeyMonitor.start(with: settingsStore.keyboardShortcut)
         self.hotKeyMonitor = hotKeyMonitor
     }
 

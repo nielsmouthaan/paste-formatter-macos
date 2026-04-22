@@ -1,5 +1,5 @@
 import AppKit
-import CleanPasteCore
+import PasteFormatterCore
 import Foundation
 import Testing
 
@@ -7,7 +7,7 @@ import Testing
     let paragraphStyle = NSMutableParagraphStyle()
     paragraphStyle.alignment = .center
 
-    let input = NSMutableAttributedString(string: "CleanPaste")
+    let input = NSMutableAttributedString(string: "Paste Formatter")
     let fullRange = NSRange(location: 0, length: input.length)
     input.addAttributes([
         .font: NSFont.systemFont(ofSize: 18, weight: .bold),

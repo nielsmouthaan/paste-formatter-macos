@@ -9,25 +9,33 @@ let package = Package(
     ],
     products: [
         .library(
-            name: "CleanPasteCore",
-            targets: ["CleanPasteCore"]
+            name: "PasteFormatterCore",
+            targets: ["PasteFormatterCore"]
         ),
         .executable(
-            name: "CleanPaste",
-            targets: ["CleanPaste"]
+            name: "PasteFormatter",
+            targets: ["PasteFormatter"]
         )
     ],
     targets: [
         .target(
-            name: "CleanPasteCore"
+            name: "PasteFormatterCore",
+            path: "Sources/PasteFormatterCore"
         ),
         .executableTarget(
-            name: "CleanPaste",
-            dependencies: ["CleanPasteCore"]
+            name: "PasteFormatter",
+            dependencies: ["PasteFormatterCore"],
+            path: "Sources/PasteFormatter"
         ),
         .testTarget(
-            name: "CleanPasteCoreTests",
-            dependencies: ["CleanPasteCore"]
+            name: "PasteFormatterCoreTests",
+            dependencies: ["PasteFormatterCore"],
+            path: "Tests/PasteFormatterCoreTests"
+        ),
+        .testTarget(
+            name: "PasteFormatterTests",
+            dependencies: ["PasteFormatter"],
+            path: "Tests/PasteFormatterTests"
         )
     ],
     swiftLanguageModes: [.v6]

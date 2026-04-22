@@ -1,7 +1,7 @@
 import AppKit
 
 @main
-struct CleanPasteApp {
+struct PasteFormatterApp {
     static func main() {
         let app = NSApplication.shared
         let delegate = AppDelegate()
