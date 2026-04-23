@@ -19,6 +19,8 @@ Paste Formatter is a simple macOS menu bar app that pastes formatted content fro
 
 You can download releases via [Releases](https://github.com/nielsmouthaan/paste-formatter/releases).
 
+[![Buy Me a Coffee](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=☕&slug=nielsmouthaan&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff)](https://www.buymeacoffee.com/nielsmouthaan)
+
 Consider supporting this and other free/open source projects I maintain by [buying me a coffee](https://buymeacoffee.com/nielsmouthaan). Also, check out my other apps:
 
 - [Daily](https://dailytimetracking.com/?utm_source=pasteformatter), a popular Mac time tracker that works without timers
