@@ -35,7 +35,13 @@ To build your own copy, check out this repository, ensure you have [Xcode](https
 ./scripts/build-app.sh --bundle-identifier <BUNDLE_IDENTIFIER>
 ```
 
-To sign the app bundle as well:
+This creates `dist/Paste Formatter.app`.
+
+The required build argument is:
+
+- `<BUNDLE_IDENTIFIER>`: the reverse-DNS bundle identifier for your own build, for example `com.example.paste-formatter`.
+
+To sign the app bundle as well, pass the name of a code signing identity available in your local keychain:
 
 ```bash
 ./scripts/build-app.sh \
@@ -43,7 +49,23 @@ To sign the app bundle as well:
   --signing-identity "<SIGNING_IDENTITY>"
 ```
 
-This creates `dist/Paste Formatter.app`.
+For a notarized build that can be distributed via GitHub Releases, use a Developer ID Application certificate and create a release zip:
+
+```bash
+./scripts/build-app.sh \
+  --bundle-identifier <BUNDLE_IDENTIFIER> \
+  --signing-identity "Developer ID Application: Your Name (TEAMID)" \
+  --notarize \
+  --release-zip
+```
+
+The optional release arguments are:
+
+- `<SIGNING_IDENTITY>`: the exact name of your local code signing identity, usually a Developer ID Application certificate for notarized distribution.
+- `--notarize`: submits the signed app to Apple notarization, staples the ticket, and verifies the result. This requires the [asc CLI](https://github.com/nielsmouthaan/app-store-connect-cli) to be installed and authenticated locally.
+- `--release-zip`: creates `dist/Paste Formatter <version>.zip`, using the version from `Info.plist`.
+
+Notarization is optional and no private keys, certificates, or credentials are stored in this repository.
 
 ## Contribute
 
