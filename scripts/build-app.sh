@@ -22,7 +22,7 @@ RELEASE_ZIP="$DIST_DIR/$APP_NAME $MARKETING_VERSION.zip"
 usage() {
   cat <<'EOF'
 Build a macOS Paste Formatter app bundle in dist/, optionally sign it,
-notarize it, and create a zip for distribution via GitHub Releases.
+notarize it, and create a zipped release build.
 
 Usage:
   ./scripts/build-app.sh --bundle-identifier <identifier> [options]
