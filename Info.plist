@@ -5,23 +5,23 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
-	<string>__APP_EXECUTABLE__</string>
+	<string>Paste Formatter</string>
 	<key>CFBundleDisplayName</key>
-	<string>__APP_NAME__</string>
+	<string>Paste Formatter</string>
 	<key>CFBundleIdentifier</key>
 	<string>__BUNDLE_IDENTIFIER__</string>
 	<key>CFBundleIconFile</key>
-	<string>__APP_ICON_FILE__</string>
+	<string>AppIcon</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>__APP_NAME__</string>
+	<string>Paste Formatter</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>__MARKETING_VERSION__</string>
+	<string>1.0.0</string>
 	<key>CFBundleVersion</key>
-	<string>__BUNDLE_VERSION__</string>
+	<string>1</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>13.0</string>
 	<key>LSUIElement</key>

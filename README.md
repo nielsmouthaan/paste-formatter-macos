@@ -1,69 +1,80 @@
-# Paste Formatter 0.1.0
+# Paste Formatter
 
-Minimal macOS menu bar app for pasting cleaned rich text:
+Paste Formatter is a simple macOS menu bar app that pastes formatted content from your clipboard. The original issue it solves is copying rich text including links, while stripping unwanted fonts and colors before pasting into another app.
 
-- removes fonts unless `Preserve font` is enabled
-- removes foreground/background colors unless `Preserve colors` is enabled
-- preserves links by default
-- preserves paragraph breaks in plain text by default when the source uses paragraph spacing
-  while keeping consecutive rich-text list items compact
-- keeps paragraph styles intact
-- restores the original clipboard shortly after a successful automatic paste so repeated pastes still start from the original copied content
+## Features
 
-## Run
+- Paste formatted clipboard content in the active app from the menu or using a global keyboard shortcut
+- Preserve fonts when pasting
+- Preserve colors when pasting
+- Preserve links when pasting
+- Preserve paragraph breaks when pasting into text-only fields
+- Change the default keyboard shortcut
+- Launch the app automatically at login
 
-```bash
-swift run PasteFormatter
-```
+## Download
 
-## Build A `.app`
+You can download releases via [Releases](https://github.com/nielsmouthaan/paste-formatter/releases).
 
-```bash
-./scripts/build-app.sh
-```
+Consider supporting this and other free/open source projects I maintain by [buying me a coffee](https://buymeacoffee.com/nielsmouthaan). Also, check out my other apps:
 
-This creates a launchable bundle at `dist/Paste Formatter.app`.
+- [Daily](https://dailytimetracking.com/?utm_source=pasteformatter), a popular Mac time tracker that works without timers
+- [Ejectify](https://ejectify.app/?utm_source=pasteformatter), safely eliminates “Disk Not Ejected Properly” notifications
+- [Backup Status](https://backupstatus.app/?utm_source=pasteformatter), a Time Machine status widget for macOS
 
-Optional overrides:
+## Build
 
-```bash
-APP_NAME="Paste Formatter" \
-EXECUTABLE_NAME=PasteFormatter \
-BUNDLE_IDENTIFIER=com.example.paste-formatter \
-MARKETING_VERSION=0.1.0 \
-BUNDLE_VERSION=1 \
-./scripts/build-app.sh
-```
-
-To sign the app bundle, also provide a signing identity:
+To build your own copy, check out this repository, ensure you have [Xcode](https://developer.apple.com/xcode/) and its [command-line tools](https://developer.apple.com/documentation/xcode/installing-the-command-line-tools/) installed, and run:
 
 ```bash
-SIGNING_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
-BUNDLE_IDENTIFIER=com.example.paste-formatter \
-./scripts/build-app.sh
+./scripts/build-app.sh --bundle-identifier <BUNDLE_IDENTIFIER>
 ```
 
-If `Assets/AppIcon.icns` exists, the build script copies it into the app bundle automatically. You can override that path with `ICON_SOURCE_PATH` or change the resource name with `ICON_NAME`.
+To sign the app bundle as well:
 
-The app appears in the menu bar with:
+```bash
+./scripts/build-app.sh \
+  --bundle-identifier <BUNDLE_IDENTIFIER> \
+  --signing-identity "<SIGNING_IDENTITY>"
+```
 
-- `Paste` using a configurable global keyboard shortcut
-- toggles for font, colors, and links
-- a toggle for `Preserve paragraph breaks in plain text`
-- `Launch at login` as a menu toggle for app bundle installs
-- `Change keyboard shortcut…` to record any supported shortcut
-- `About Paste Formatter` to open the GitHub project page
-- persisted settings through `UserDefaults`
+This creates `dist/Paste Formatter.app`.
 
-## Accessibility
+## Contribute
 
-Automatic pasting is done by simulating `Command + V`, so macOS will ask for Accessibility permission the first time the app tries to paste automatically. If permission is missing, Paste Formatter still leaves the cleaned content on the clipboard so you can paste manually.
+Contributions are welcome. Feel free to open an issue for bugs or feature requests, or open a pull request directly.
 
-After a successful automatic paste, Paste Formatter restores the original clipboard about one second later. This keeps repeated pastes anchored to what you originally copied instead of to Paste Formatter's temporary transformed clipboard content.
+## Frequently asked questions
 
-## Notes
+### How does this app work?
 
-- The build script is generic by default and skips signing unless `SIGNING_IDENTITY` is provided.
-- The build script picks up `Assets/AppIcon.icns` automatically when present.
-- `LSUIElement` is enabled, so the app launches as a menu bar utility without a Dock icon.
-- `Launch at login` uses `SMAppService`, which requires the app to run from a signed `.app` bundle before macOS will fully accept it.
+Paste Formatter reads the current clipboard contents, creates a cleaned version based on your selected options, temporarily puts that cleaned version on the clipboard, and then simulates `Command-V` in the active app.
+
+### Why do I need this app?
+
+It is useful when you want to paste rich text content without carrying over unwanted styling from the source, while still keeping the formatting you do want, such as links.
+
+### Why does the app need Accessibility permissions in System Settings?
+
+The app uses Accessibility permissions to simulate `Command-V` after preparing the cleaned clipboard content. Without that permission, it can still clean the clipboard, but you will need to paste manually.
+
+### What's the minimum macOS version?
+
+macOS 13 or later.
+
+### What does “Preserve paragraph breaks in plain text” do?
+
+Some apps paste only plain text and ignore rich-text paragraph spacing. When this option is enabled, Paste Formatter tries to preserve paragraph breaks more clearly for those text-only targets.
+
+### Will this work together with my clipboard manager?
+
+Paste Formatter temporarily places formatted content on your clipboard before pasting it, so your clipboard manager may capture an extra copy. If that happens, configure your clipboard manager to ignore Paste Formatter.
+
+### Can I hide the menu bar icon?
+
+You can control whether Paste Formatter appears in the menu bar via System Settings. See [this article](https://support.apple.com/guide/mac-help/MCHLAD96D366) for instructions.
+
+## License
+
+See [LICENSE](LICENSE).
+
