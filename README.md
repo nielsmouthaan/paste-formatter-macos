@@ -2,11 +2,11 @@
 
 Paste Formatter is a simple macOS menu bar app that pastes formatted content from your clipboard. The original issue it solves is copying rich text including links, while stripping unwanted fonts and colors before pasting into another app.
 
-![Paste Formatter](Header.png)
+![Paste Formatter](Header.jpg)
 
 ## Features
 
-- Paste formatted clipboard content in the active app from the menu or using a global keyboard shortcut
+- Paste formatted clipboard content in the active app from Paste Formatter's menu in the menu bar or using a global keyboard shortcut
 - Preserve fonts when pasting
 - Preserve colors when pasting
 - Preserve links when pasting
