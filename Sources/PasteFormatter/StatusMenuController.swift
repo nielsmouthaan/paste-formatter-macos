@@ -24,37 +24,37 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
     }()
 
     private lazy var preserveFontItem = makeToggleItem(
-        title: "Preserve font",
+        title: "Preserve Font",
         action: #selector(togglePreserveFont)
     )
 
     private lazy var preserveColorsItem = makeToggleItem(
-        title: "Preserve colors",
+        title: "Preserve Colors",
         action: #selector(togglePreserveColors)
     )
 
     private lazy var preserveLinksItem = makeToggleItem(
-        title: "Preserve links",
+        title: "Preserve Links",
         action: #selector(togglePreserveLinks)
     )
 
     private lazy var preserveListsInPlainTextItem = makeToggleItem(
-        title: "Preserve lists in plain text",
+        title: "Preserve Lists in Plain Text",
         action: #selector(togglePreserveListsInPlainText)
     )
 
     private lazy var preserveParagraphBreaksInPlainTextItem = makeToggleItem(
-        title: "Preserve paragraph breaks in plain text",
+        title: "Preserve Paragraph Breaks in Plain Text",
         action: #selector(togglePreserveParagraphBreaksInPlainText)
     )
 
     private lazy var launchAtLoginItem = makeToggleItem(
-        title: "Launch at login",
+        title: "Launch at Login",
         action: #selector(toggleLaunchAtLogin)
     )
 
     private lazy var keyboardShortcutItem = makeActionItem(
-        title: "Change keyboard shortcut…",
+        title: "Change Keyboard Shortcut…",
         action: #selector(customizeShortcut)
     )
 
@@ -186,16 +186,16 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
 
         switch launchAtLoginService.status {
         case .enabled:
-            launchAtLoginItem.title = "Launch at login"
+            launchAtLoginItem.title = "Launch at Login"
             launchAtLoginItem.state = .on
         case .requiresApproval:
-            launchAtLoginItem.title = "Launch at login (needs approval)"
+            launchAtLoginItem.title = "Launch at Login (Requires Approval)"
             launchAtLoginItem.state = .on
         case .notRegistered, .notFound:
-            launchAtLoginItem.title = "Launch at login"
+            launchAtLoginItem.title = "Launch at Login"
             launchAtLoginItem.state = .off
         @unknown default:
-            launchAtLoginItem.title = "Launch at login"
+            launchAtLoginItem.title = "Launch at Login"
             launchAtLoginItem.state = .off
         }
     }

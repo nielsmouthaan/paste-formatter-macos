@@ -91,11 +91,11 @@ The app uses Accessibility permissions to simulate `Command-V` after preparing t
 
 macOS 13 or later.
 
-### What does “Preserve paragraph breaks in plain text” do?
+### What does “Preserve Paragraph Breaks in Plain Text” do?
 
 Some apps paste only plain text and ignore rich-text paragraph spacing. When this option is enabled, Paste Formatter tries to preserve paragraph breaks more clearly for those text-only targets.
 
-### What does “Preserve lists in plain text” do?
+### What does “Preserve Lists in Plain Text” do?
 
 Some rich-text lists store their bullets, numbering, and nesting as list metadata instead of plain characters. When this option is enabled, Paste Formatter adds visible list markers and simple indentation to the plain-text version used by text-only fields.
 
