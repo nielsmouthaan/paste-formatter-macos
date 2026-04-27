@@ -17,6 +17,7 @@ ENTITLEMENTS_PATH="$ROOT_DIR/PasteFormatter.entitlements"
 PRIVACY_MANIFEST="$ROOT_DIR/PrivacyInfo.xcprivacy"
 ICON_NAME="AppIcon"
 ICON_SOURCE_PATH="$ROOT_DIR/Assets/$ICON_NAME.png"
+MENU_BAR_ICON_SOURCE_PATH="$ROOT_DIR/Assets/MenuBarIcon.png"
 NOTARIZATION_ZIP="$DIST_DIR/$APP_NAME-notarization.zip"
 MARKETING_VERSION="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$INFO_TEMPLATE")"
 RELEASE_ZIP="$DIST_DIR/$APP_NAME $MARKETING_VERSION.zip"
@@ -233,6 +234,21 @@ cp "$ICON_SOURCE_PATH" "$ICONSET_DIR/icon_512x512@2x.png"
 
 /usr/bin/iconutil --convert icns --output "$RESOURCES_DIR/$ICON_NAME.icns" "$ICONSET_DIR"
 rm -rf "$ICON_WORK_DIR"
+
+if [ ! -f "$MENU_BAR_ICON_SOURCE_PATH" ]; then
+  echo "Missing menu bar icon: $MENU_BAR_ICON_SOURCE_PATH" >&2
+  exit 1
+fi
+
+MENU_BAR_ICON_WIDTH="$(/usr/bin/sips -g pixelWidth "$MENU_BAR_ICON_SOURCE_PATH" | awk '/pixelWidth/ { print $2 }')"
+MENU_BAR_ICON_HEIGHT="$(/usr/bin/sips -g pixelHeight "$MENU_BAR_ICON_SOURCE_PATH" | awk '/pixelHeight/ { print $2 }')"
+
+if [ "$MENU_BAR_ICON_WIDTH" != "36" ] || [ "$MENU_BAR_ICON_HEIGHT" != "36" ]; then
+  echo "Menu bar icon must be a 36x36 PNG: $MENU_BAR_ICON_SOURCE_PATH is ${MENU_BAR_ICON_WIDTH}x${MENU_BAR_ICON_HEIGHT}" >&2
+  exit 1
+fi
+
+cp "$MENU_BAR_ICON_SOURCE_PATH" "$RESOURCES_DIR/MenuBarIcon.png"
 
 if [ -f "$PRIVACY_MANIFEST" ]; then
   cp "$PRIVACY_MANIFEST" "$RESOURCES_DIR/PrivacyInfo.xcprivacy"

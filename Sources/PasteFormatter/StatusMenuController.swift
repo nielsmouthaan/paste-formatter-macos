@@ -140,7 +140,7 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
             return
         }
 
-        if let image = NSImage(systemSymbolName: "doc.on.clipboard", accessibilityDescription: "Paste Formatter") {
+        if let image = makeStatusItemImage() {
             image.isTemplate = true
             button.image = image
         } else {
@@ -148,6 +148,22 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
         }
 
         button.toolTip = "Paste Formatter"
+    }
+
+    private func makeStatusItemImage() -> NSImage? {
+        if let imageURL = Bundle.main.url(forResource: "MenuBarIcon", withExtension: "png"),
+           let image = NSImage(contentsOf: imageURL) {
+            image.size = NSSize(width: 18, height: 18)
+            image.isTemplate = true
+            return image
+        }
+
+        if let image = NSImage(systemSymbolName: "doc.on.clipboard", accessibilityDescription: "Paste Formatter") {
+            image.isTemplate = true
+            return image
+        }
+
+        return nil
     }
 
     private func configureMenu() {
