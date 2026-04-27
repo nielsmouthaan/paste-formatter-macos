@@ -16,7 +16,7 @@ INFO_PLIST="$CONTENTS_DIR/Info.plist"
 ENTITLEMENTS_PATH="$ROOT_DIR/PasteFormatter.entitlements"
 PRIVACY_MANIFEST="$ROOT_DIR/PrivacyInfo.xcprivacy"
 ICON_NAME="AppIcon"
-ICON_SOURCE_PATH="$ROOT_DIR/Assets/$ICON_NAME.icns"
+ICON_SOURCE_PATH="$ROOT_DIR/Assets/$ICON_NAME.png"
 NOTARIZATION_ZIP="$DIST_DIR/$APP_NAME-notarization.zip"
 MARKETING_VERSION="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$INFO_TEMPLATE")"
 RELEASE_ZIP="$DIST_DIR/$APP_NAME $MARKETING_VERSION.zip"
@@ -203,9 +203,36 @@ sed \
   -e "s/__BUNDLE_IDENTIFIER__/$BUNDLE_IDENTIFIER/g" \
   "$INFO_TEMPLATE" > "$INFO_PLIST"
 
-if [ -f "$ICON_SOURCE_PATH" ]; then
-  cp "$ICON_SOURCE_PATH" "$RESOURCES_DIR/$ICON_NAME.icns"
+if [ ! -f "$ICON_SOURCE_PATH" ]; then
+  echo "Missing app icon: $ICON_SOURCE_PATH" >&2
+  exit 1
 fi
+
+ICON_WIDTH="$(/usr/bin/sips -g pixelWidth "$ICON_SOURCE_PATH" | awk '/pixelWidth/ { print $2 }')"
+ICON_HEIGHT="$(/usr/bin/sips -g pixelHeight "$ICON_SOURCE_PATH" | awk '/pixelHeight/ { print $2 }')"
+
+if [ "$ICON_WIDTH" != "1024" ] || [ "$ICON_HEIGHT" != "1024" ]; then
+  echo "App icon must be a 1024x1024 PNG: $ICON_SOURCE_PATH is ${ICON_WIDTH}x${ICON_HEIGHT}" >&2
+  exit 1
+fi
+
+ICON_WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/paste-formatter-icon.XXXXXX")"
+ICONSET_DIR="$ICON_WORK_DIR/$ICON_NAME.iconset"
+mkdir -p "$ICONSET_DIR"
+
+/usr/bin/sips -z 16 16 "$ICON_SOURCE_PATH" --out "$ICONSET_DIR/icon_16x16.png" >/dev/null
+/usr/bin/sips -z 32 32 "$ICON_SOURCE_PATH" --out "$ICONSET_DIR/icon_16x16@2x.png" >/dev/null
+/usr/bin/sips -z 32 32 "$ICON_SOURCE_PATH" --out "$ICONSET_DIR/icon_32x32.png" >/dev/null
+/usr/bin/sips -z 64 64 "$ICON_SOURCE_PATH" --out "$ICONSET_DIR/icon_32x32@2x.png" >/dev/null
+/usr/bin/sips -z 128 128 "$ICON_SOURCE_PATH" --out "$ICONSET_DIR/icon_128x128.png" >/dev/null
+/usr/bin/sips -z 256 256 "$ICON_SOURCE_PATH" --out "$ICONSET_DIR/icon_128x128@2x.png" >/dev/null
+/usr/bin/sips -z 256 256 "$ICON_SOURCE_PATH" --out "$ICONSET_DIR/icon_256x256.png" >/dev/null
+/usr/bin/sips -z 512 512 "$ICON_SOURCE_PATH" --out "$ICONSET_DIR/icon_256x256@2x.png" >/dev/null
+/usr/bin/sips -z 512 512 "$ICON_SOURCE_PATH" --out "$ICONSET_DIR/icon_512x512.png" >/dev/null
+cp "$ICON_SOURCE_PATH" "$ICONSET_DIR/icon_512x512@2x.png"
+
+/usr/bin/iconutil --convert icns --output "$RESOURCES_DIR/$ICON_NAME.icns" "$ICONSET_DIR"
+rm -rf "$ICON_WORK_DIR"
 
 if [ -f "$PRIVACY_MANIFEST" ]; then
   cp "$PRIVACY_MANIFEST" "$RESOURCES_DIR/PrivacyInfo.xcprivacy"
