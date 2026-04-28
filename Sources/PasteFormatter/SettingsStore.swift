@@ -1,5 +1,6 @@
 import PasteFormatterCore
 import Foundation
+import PasteFormatterUI
 
 final class SettingsStore {
     private enum Keys {
@@ -10,6 +11,7 @@ final class SettingsStore {
         static let preserveParagraphBreaksInPlainText = "preserveParagraphBreaksInPlainText"
         static let shortcutKeyCode = "shortcutKeyCode"
         static let shortcutModifiers = "shortcutModifiers"
+        static let didCompleteOnboarding = "didCompleteOnboarding"
     }
 
     private let userDefaults: UserDefaults
@@ -70,6 +72,15 @@ final class SettingsStore {
         set {
             userDefaults.set(newValue.keyCode, forKey: Keys.shortcutKeyCode)
             userDefaults.set(newValue.carbonModifiers, forKey: Keys.shortcutModifiers)
+        }
+    }
+
+    var didCompleteOnboarding: Bool {
+        get {
+            userDefaults.bool(forKey: Keys.didCompleteOnboarding)
+        }
+        set {
+            userDefaults.set(newValue, forKey: Keys.didCompleteOnboarding)
         }
     }
 }

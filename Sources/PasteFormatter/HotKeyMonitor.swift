@@ -1,5 +1,6 @@
 import Carbon.HIToolbox
 import Foundation
+import PasteFormatterUI
 
 @MainActor
 final class HotKeyMonitor {
@@ -9,6 +10,7 @@ final class HotKeyMonitor {
     private var currentShortcut: KeyboardShortcut?
     private var hotKeyReference: EventHotKeyRef?
     private var eventHandlerReference: EventHandlerRef?
+    private var isShortcutSuspended = false
 
     init(action: @escaping @MainActor () -> Void) {
         self.action = action
@@ -17,6 +19,61 @@ final class HotKeyMonitor {
     func start(with shortcut: KeyboardShortcut) {
         installEventHandlerIfNeeded()
         updateShortcut(shortcut)
+    }
+
+    func canRegisterShortcut(_ shortcut: KeyboardShortcut) -> Bool {
+        installEventHandlerIfNeeded()
+
+        guard currentShortcut != shortcut else {
+            return true
+        }
+
+        let previousShortcut = currentShortcut
+        let shouldRestorePreviousShortcut = !isShortcutSuspended
+        if let hotKeyReference {
+            UnregisterEventHotKey(hotKeyReference)
+            self.hotKeyReference = nil
+        }
+
+        var probeReference: EventHotKeyRef?
+        let probeHotKeyID = EventHotKeyID(signature: signature, id: 2)
+        let status = RegisterEventHotKey(
+            shortcut.keyCode,
+            shortcut.carbonModifiers,
+            probeHotKeyID,
+            GetApplicationEventTarget(),
+            0,
+            &probeReference
+        )
+
+        if let probeReference {
+            UnregisterEventHotKey(probeReference)
+        }
+
+        if shouldRestorePreviousShortcut, let previousShortcut {
+            _ = register(previousShortcut, id: 1, reference: &hotKeyReference)
+        }
+
+        return status == noErr
+    }
+
+    func suspendShortcut() {
+        isShortcutSuspended = true
+
+        if let hotKeyReference {
+            UnregisterEventHotKey(hotKeyReference)
+            self.hotKeyReference = nil
+        }
+    }
+
+    func resumeShortcut() {
+        isShortcutSuspended = false
+
+        guard hotKeyReference == nil, let currentShortcut else {
+            return
+        }
+
+        _ = register(currentShortcut, id: 1, reference: &hotKeyReference)
     }
 
     @discardableResult
@@ -28,20 +85,13 @@ final class HotKeyMonitor {
             self.hotKeyReference = nil
         }
 
-        let hotKeyID = EventHotKeyID(signature: signature, id: 1)
-        let status = RegisterEventHotKey(
-            shortcut.keyCode,
-            shortcut.carbonModifiers,
-            hotKeyID,
-            GetApplicationEventTarget(),
-            0,
-            &hotKeyReference
-        )
+        let status = register(shortcut, id: 1, reference: &hotKeyReference)
 
         guard status == noErr else {
             return false
         }
 
+        isShortcutSuspended = false
         currentShortcut = shortcut
         return true
     }
@@ -81,7 +131,7 @@ final class HotKeyMonitor {
             &hotKeyID
         )
 
-        guard status == noErr, hotKeyID.signature == monitor.signature else {
+        guard status == noErr, hotKeyID.signature == monitor.signature, hotKeyID.id == 1 else {
             return noErr
         }
 
@@ -96,6 +146,22 @@ final class HotKeyMonitor {
         string.utf8.reduce(0) { partialResult, byte in
             (partialResult << 8) + OSType(byte)
         }
+    }
+
+    private func register(
+        _ shortcut: KeyboardShortcut,
+        id: UInt32,
+        reference: inout EventHotKeyRef?
+    ) -> OSStatus {
+        let hotKeyID = EventHotKeyID(signature: signature, id: id)
+        return RegisterEventHotKey(
+            shortcut.keyCode,
+            shortcut.carbonModifiers,
+            hotKeyID,
+            GetApplicationEventTarget(),
+            0,
+            &reference
+        )
     }
 
     private func installEventHandlerIfNeeded() {

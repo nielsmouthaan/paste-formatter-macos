@@ -254,6 +254,11 @@ if [ -f "$PRIVACY_MANIFEST" ]; then
   cp "$PRIVACY_MANIFEST" "$RESOURCES_DIR/PrivacyInfo.xcprivacy"
 fi
 
+while IFS= read -r RESOURCE_BUNDLE; do
+  echo "Copying resources from $(basename "$RESOURCE_BUNDLE")..."
+  find "$RESOURCE_BUNDLE" -maxdepth 1 -type f -exec cp {} "$RESOURCES_DIR/" \;
+done < <(find "$(dirname "$EXECUTABLE_PATH")" -maxdepth 1 -name "*.bundle" -type d)
+
 if [ -n "$PROVISIONING_PROFILE" ]; then
   cp "$PROVISIONING_PROFILE" "$CONTENTS_DIR/embedded.provisionprofile"
 fi

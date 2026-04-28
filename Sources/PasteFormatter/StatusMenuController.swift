@@ -1,5 +1,6 @@
 import AppKit
 import PasteFormatterCore
+import PasteFormatterUI
 import Foundation
 import ServiceManagement
 
@@ -10,7 +11,9 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
     private let pasteExecutor: PasteActionExecutor
     private let launchAtLoginService: LaunchAtLoginService
     private let applyShortcut: @MainActor (KeyboardShortcut) -> Bool
-    private let shortcutRecorder = KeyboardShortcutRecorder()
+    private let suspendShortcut: @MainActor () -> Void
+    private let resumeShortcut: @MainActor () -> Void
+    private let shortcutRecorder: KeyboardShortcutRecorder
     private let repositoryURL = URL(string: "https://github.com/nielsmouthaan/paste-formatter")!
 
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -67,13 +70,19 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
         pasteboardService: PasteboardService,
         pasteExecutor: PasteActionExecutor,
         launchAtLoginService: LaunchAtLoginService,
-        applyShortcut: @escaping @MainActor (KeyboardShortcut) -> Bool
+        applyShortcut: @escaping @MainActor (KeyboardShortcut) -> Bool,
+        canRegisterShortcut: @escaping @MainActor (KeyboardShortcut) -> Bool,
+        suspendShortcut: @escaping @MainActor () -> Void,
+        resumeShortcut: @escaping @MainActor () -> Void
     ) {
         self.settingsStore = settingsStore
         self.pasteboardService = pasteboardService
         self.pasteExecutor = pasteExecutor
         self.launchAtLoginService = launchAtLoginService
         self.applyShortcut = applyShortcut
+        self.suspendShortcut = suspendShortcut
+        self.resumeShortcut = resumeShortcut
+        self.shortcutRecorder = KeyboardShortcutRecorder(isShortcutAvailable: canRegisterShortcut)
     }
 
     func start() {
@@ -129,10 +138,29 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
             } else {
                 self.presentAlert(
                     title: "Accessibility permission required",
-                    message: "Grant Accessibility permissions in System Settings to allow Paste Formatter to paste."
+                    message: "Grant Accessibility permissions in System Settings to allow Paste Formatter to paste formatted clipboard content."
                 )
             }
         }
+    }
+
+    var currentKeyboardShortcut: KeyboardShortcut {
+        settingsStore.keyboardShortcut
+    }
+
+    @discardableResult
+    func recordKeyboardShortcut() -> KeyboardShortcut? {
+        suspendShortcut()
+        defer {
+            resumeShortcut()
+        }
+
+        guard let shortcut = shortcutRecorder.recordShortcut(current: settingsStore.keyboardShortcut) else {
+            return nil
+        }
+
+        setKeyboardShortcut(shortcut)
+        return shortcut
     }
 
     private func configureStatusItem() {
@@ -343,11 +371,7 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
     }
 
     @objc private func customizeShortcut() {
-        guard let shortcut = shortcutRecorder.recordShortcut(current: settingsStore.keyboardShortcut) else {
-            return
-        }
-
-        setKeyboardShortcut(shortcut)
+        recordKeyboardShortcut()
     }
 
     @objc private func handleAbout() {

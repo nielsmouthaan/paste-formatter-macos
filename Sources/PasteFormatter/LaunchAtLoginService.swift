@@ -51,4 +51,8 @@ final class LaunchAtLoginService {
             return .failure(.underlying(error as NSError))
         }
     }
+
+    func openSystemSettings() {
+        SMAppService.openSystemSettingsLoginItems()
+    }
 }

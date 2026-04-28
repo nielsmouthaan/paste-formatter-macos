@@ -12,6 +12,10 @@ let package = Package(
             name: "PasteFormatterCore",
             targets: ["PasteFormatterCore"]
         ),
+        .library(
+            name: "PasteFormatterUI",
+            targets: ["PasteFormatterUI"]
+        ),
         .executable(
             name: "PasteFormatter",
             targets: ["PasteFormatter"]
@@ -22,9 +26,16 @@ let package = Package(
             name: "PasteFormatterCore",
             path: "Sources/PasteFormatterCore"
         ),
+        .target(
+            name: "PasteFormatterUI",
+            path: "Sources/PasteFormatterUI",
+            resources: [
+                .process("Resources")
+            ]
+        ),
         .executableTarget(
             name: "PasteFormatter",
-            dependencies: ["PasteFormatterCore"],
+            dependencies: ["PasteFormatterCore", "PasteFormatterUI"],
             path: "Sources/PasteFormatter"
         ),
         .testTarget(
