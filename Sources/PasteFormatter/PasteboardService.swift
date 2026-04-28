@@ -1,6 +1,7 @@
 import AppKit
 import PasteFormatterCore
 import Foundation
+import UniformTypeIdentifiers
 
 enum ClipboardPayload {
     case attributed(NSAttributedString)
@@ -82,7 +83,19 @@ struct PasteboardService {
         return PasteboardSnapshot(items: items)
     }
 
+    var hasContents: Bool {
+        guard let items = pasteboard.pasteboardItems else {
+            return false
+        }
+
+        return items.contains { !$0.types.isEmpty }
+    }
+
     func readCurrentContents() -> ClipboardPayload? {
+        guard !prefersNativePaste else {
+            return nil
+        }
+
         if let attributed = readAttributedString(for: .rtf, documentType: .rtf) {
             return .attributed(attributed)
         }
@@ -172,5 +185,23 @@ struct PasteboardService {
             options: options,
             documentAttributes: nil
         )
+    }
+
+    private var prefersNativePaste: Bool {
+        guard let items = pasteboard.pasteboardItems else {
+            return false
+        }
+
+        return items.contains { item in
+            item.types.contains { type in
+                guard let uniformType = UTType(type.rawValue) else {
+                    return false
+                }
+
+                return uniformType.conforms(to: .image)
+                    || uniformType.conforms(to: .pdf)
+                    || uniformType.conforms(to: .fileURL)
+            }
+        }
     }
 }

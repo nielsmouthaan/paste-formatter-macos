@@ -93,11 +93,11 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
 
     func performFormattedPaste() {
         guard let payload = pasteboardService.readCurrentContents() else {
-            NSSound.beep()
-            presentAlert(
-                title: "Nothing to paste",
-                message: "Paste Formatter only handles plain text, RTF, and HTML clipboard content."
-            )
+            guard pasteboardService.hasContents else {
+                return
+            }
+
+            performNativePaste()
             return
         }
 
@@ -136,10 +136,7 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
                     )
                 }
             } else {
-                self.presentAlert(
-                    title: "Accessibility permission required",
-                    message: "Grant Accessibility permissions in System Settings to allow Paste Formatter to paste formatted clipboard content."
-                )
+                self.presentAccessibilityPermissionAlert()
             }
         }
     }
@@ -229,6 +226,7 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
         preserveLinksItem.state = options.preserveLinks ? .on : .off
         preserveListsInPlainTextItem.state = options.preserveListsInPlainText ? .on : .off
         preserveParagraphBreaksInPlainTextItem.state = options.preserveParagraphBreaksInPlainText ? .on : .off
+        pasteItem.isEnabled = pasteboardService.hasContents
         pasteItem.keyEquivalent = shortcut.keyEquivalent
         pasteItem.keyEquivalentModifierMask = shortcut.menuModifierMask
 
@@ -306,6 +304,26 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
         alert.messageText = title
         alert.informativeText = message
         alert.runModal()
+    }
+
+    private func presentAccessibilityPermissionAlert() {
+        presentAlert(
+            title: "Accessibility permission required",
+            message: "Grant Accessibility permissions in System Settings to allow Paste Formatter to paste formatted clipboard content."
+        )
+    }
+
+    private func performNativePaste() {
+        Task { @MainActor [weak self, pasteExecutor] in
+            try? await Task.sleep(for: .milliseconds(120))
+            guard let self else {
+                return
+            }
+
+            if !pasteExecutor.executePaste() {
+                self.presentAccessibilityPermissionAlert()
+            }
+        }
     }
 
     func menuWillOpen(_ menu: NSMenu) {
