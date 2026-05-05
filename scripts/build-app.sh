@@ -16,12 +16,21 @@ INFO_PLIST="$CONTENTS_DIR/Info.plist"
 ENTITLEMENTS_PATH="$ROOT_DIR/PasteFormatter.entitlements"
 PRIVACY_MANIFEST="$ROOT_DIR/PrivacyInfo.xcprivacy"
 ICON_NAME="AppIcon"
-ICON_SOURCE_PATH="$ROOT_DIR/Assets/$ICON_NAME.png"
+ICON_APPICONSET_DIR="$ROOT_DIR/Assets.xcassets/$ICON_NAME.appiconset"
 MENU_BAR_ICON_SOURCE_PATH="$ROOT_DIR/Assets/MenuBarIcon.png"
 NOTARIZATION_ZIP="$DIST_DIR/$APP_NAME-notarization.zip"
 MARKETING_VERSION="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$INFO_TEMPLATE")"
 RELEASE_ZIP="$DIST_DIR/$APP_NAME $MARKETING_VERSION.zip"
 APP_STORE_PACKAGE="$DIST_DIR/PasteFormatter-$MARKETING_VERSION-mas.pkg"
+APP_STORE_SIGNING_ENTITLEMENTS=""
+
+cleanup() {
+  if [ -n "$APP_STORE_SIGNING_ENTITLEMENTS" ]; then
+    rm -f "$APP_STORE_SIGNING_ENTITLEMENTS"
+  fi
+}
+
+trap cleanup EXIT
 
 usage() {
   cat <<'EOF'
@@ -206,14 +215,43 @@ if [ "$CREATE_APP_STORE_PACKAGE" = true ]; then
       || /usr/libexec/PlistBuddy -c "Print :Entitlements:application-identifier" "$PROFILE_PLIST" 2>/dev/null \
       || true
   )"
-  rm -f "$PROFILE_PLIST"
+
+  PROFILE_TEAM_IDENTIFIER="$(
+    /usr/libexec/PlistBuddy -c "Print :Entitlements:com.apple.developer.team-identifier" "$PROFILE_PLIST" 2>/dev/null \
+      || true
+  )"
 
   PROFILE_BUNDLE_IDENTIFIER="${PROFILE_APP_IDENTIFIER#*.}"
   if [ -z "$PROFILE_APP_IDENTIFIER" ] || [ "$PROFILE_BUNDLE_IDENTIFIER" != "$BUNDLE_IDENTIFIER" ]; then
+    rm -f "$PROFILE_PLIST"
     echo "Provisioning profile does not match bundle identifier $BUNDLE_IDENTIFIER." >&2
     echo "Profile application identifier: ${PROFILE_APP_IDENTIFIER:-unknown}" >&2
     exit 1
   fi
+
+  APP_STORE_SIGNING_ENTITLEMENTS="$(mktemp "${TMPDIR:-/tmp}/paste-formatter-entitlements.XXXXXX.plist")"
+  cp "$ENTITLEMENTS_PATH" "$APP_STORE_SIGNING_ENTITLEMENTS"
+
+  /usr/libexec/PlistBuddy -c "Delete :com.apple.application-identifier" "$APP_STORE_SIGNING_ENTITLEMENTS" >/dev/null 2>&1 || true
+  /usr/libexec/PlistBuddy -c "Add :com.apple.application-identifier string $PROFILE_APP_IDENTIFIER" "$APP_STORE_SIGNING_ENTITLEMENTS"
+
+  if [ -n "$PROFILE_TEAM_IDENTIFIER" ]; then
+    /usr/libexec/PlistBuddy -c "Delete :com.apple.developer.team-identifier" "$APP_STORE_SIGNING_ENTITLEMENTS" >/dev/null 2>&1 || true
+    /usr/libexec/PlistBuddy -c "Add :com.apple.developer.team-identifier string $PROFILE_TEAM_IDENTIFIER" "$APP_STORE_SIGNING_ENTITLEMENTS"
+  fi
+
+  PROFILE_KEYCHAIN_GROUP_COUNT="$(/usr/bin/plutil -extract "Entitlements.keychain-access-groups" raw -o - "$PROFILE_PLIST" 2>/dev/null || true)"
+  if [[ "$PROFILE_KEYCHAIN_GROUP_COUNT" =~ ^[0-9]+$ ]]; then
+    /usr/libexec/PlistBuddy -c "Delete :keychain-access-groups" "$APP_STORE_SIGNING_ENTITLEMENTS" >/dev/null 2>&1 || true
+    /usr/libexec/PlistBuddy -c "Add :keychain-access-groups array" "$APP_STORE_SIGNING_ENTITLEMENTS"
+
+    for ((INDEX = 0; INDEX < PROFILE_KEYCHAIN_GROUP_COUNT; INDEX++)); do
+      PROFILE_KEYCHAIN_GROUP="$(/usr/bin/plutil -extract "Entitlements.keychain-access-groups.$INDEX" raw -o - "$PROFILE_PLIST")"
+      /usr/libexec/PlistBuddy -c "Add :keychain-access-groups:$INDEX string $PROFILE_KEYCHAIN_GROUP" "$APP_STORE_SIGNING_ENTITLEMENTS"
+    done
+  fi
+
+  rm -f "$PROFILE_PLIST"
 fi
 
 echo "Building release executable..."
@@ -246,16 +284,8 @@ sed \
   -e "s/__BUNDLE_IDENTIFIER__/$BUNDLE_IDENTIFIER/g" \
   "$INFO_TEMPLATE" > "$INFO_PLIST"
 
-if [ ! -f "$ICON_SOURCE_PATH" ]; then
-  echo "Missing app icon: $ICON_SOURCE_PATH" >&2
-  exit 1
-fi
-
-ICON_WIDTH="$(/usr/bin/sips -g pixelWidth "$ICON_SOURCE_PATH" | awk '/pixelWidth/ { print $2 }')"
-ICON_HEIGHT="$(/usr/bin/sips -g pixelHeight "$ICON_SOURCE_PATH" | awk '/pixelHeight/ { print $2 }')"
-
-if [ "$ICON_WIDTH" != "1024" ] || [ "$ICON_HEIGHT" != "1024" ]; then
-  echo "App icon must be a 1024x1024 PNG: $ICON_SOURCE_PATH is ${ICON_WIDTH}x${ICON_HEIGHT}" >&2
+if [ ! -d "$ICON_APPICONSET_DIR" ]; then
+  echo "Missing app icon set: $ICON_APPICONSET_DIR" >&2
   exit 1
 fi
 
@@ -263,16 +293,38 @@ ICON_WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/paste-formatter-icon.XXXXXX")"
 ICONSET_DIR="$ICON_WORK_DIR/$ICON_NAME.iconset"
 mkdir -p "$ICONSET_DIR"
 
-/usr/bin/sips -z 16 16 "$ICON_SOURCE_PATH" --out "$ICONSET_DIR/icon_16x16.png" >/dev/null
-/usr/bin/sips -z 32 32 "$ICON_SOURCE_PATH" --out "$ICONSET_DIR/icon_16x16@2x.png" >/dev/null
-/usr/bin/sips -z 32 32 "$ICON_SOURCE_PATH" --out "$ICONSET_DIR/icon_32x32.png" >/dev/null
-/usr/bin/sips -z 64 64 "$ICON_SOURCE_PATH" --out "$ICONSET_DIR/icon_32x32@2x.png" >/dev/null
-/usr/bin/sips -z 128 128 "$ICON_SOURCE_PATH" --out "$ICONSET_DIR/icon_128x128.png" >/dev/null
-/usr/bin/sips -z 256 256 "$ICON_SOURCE_PATH" --out "$ICONSET_DIR/icon_128x128@2x.png" >/dev/null
-/usr/bin/sips -z 256 256 "$ICON_SOURCE_PATH" --out "$ICONSET_DIR/icon_256x256.png" >/dev/null
-/usr/bin/sips -z 512 512 "$ICON_SOURCE_PATH" --out "$ICONSET_DIR/icon_256x256@2x.png" >/dev/null
-/usr/bin/sips -z 512 512 "$ICON_SOURCE_PATH" --out "$ICONSET_DIR/icon_512x512.png" >/dev/null
-cp "$ICON_SOURCE_PATH" "$ICONSET_DIR/icon_512x512@2x.png"
+ICON_ENTRIES=(
+  "16:16:AppIcon-16x16.png:icon_16x16.png"
+  "32:32:AppIcon-16x16@2x.png:icon_16x16@2x.png"
+  "32:32:AppIcon-32x32.png:icon_32x32.png"
+  "64:64:AppIcon-32x32@2x.png:icon_32x32@2x.png"
+  "128:128:AppIcon-128x128.png:icon_128x128.png"
+  "256:256:AppIcon-128x128@2x.png:icon_128x128@2x.png"
+  "256:256:AppIcon-256x256.png:icon_256x256.png"
+  "512:512:AppIcon-256x256@2x.png:icon_256x256@2x.png"
+  "512:512:AppIcon-512x512.png:icon_512x512.png"
+  "1024:1024:AppIcon-512x512@2x.png:icon_512x512@2x.png"
+)
+
+for ICON_ENTRY in "${ICON_ENTRIES[@]}"; do
+  IFS=":" read -r EXPECTED_WIDTH EXPECTED_HEIGHT SOURCE_FILENAME ICONSET_FILENAME <<< "$ICON_ENTRY"
+  SOURCE_ICON_PATH="$ICON_APPICONSET_DIR/$SOURCE_FILENAME"
+
+  if [ ! -f "$SOURCE_ICON_PATH" ]; then
+    echo "Missing app icon image: $SOURCE_ICON_PATH" >&2
+    exit 1
+  fi
+
+  ICON_WIDTH="$(/usr/bin/sips -g pixelWidth "$SOURCE_ICON_PATH" | awk '/pixelWidth/ { print $2 }')"
+  ICON_HEIGHT="$(/usr/bin/sips -g pixelHeight "$SOURCE_ICON_PATH" | awk '/pixelHeight/ { print $2 }')"
+
+  if [ "$ICON_WIDTH" != "$EXPECTED_WIDTH" ] || [ "$ICON_HEIGHT" != "$EXPECTED_HEIGHT" ]; then
+    echo "App icon image must be ${EXPECTED_WIDTH}x${EXPECTED_HEIGHT}: $SOURCE_ICON_PATH is ${ICON_WIDTH}x${ICON_HEIGHT}" >&2
+    exit 1
+  fi
+
+  cp "$SOURCE_ICON_PATH" "$ICONSET_DIR/$ICONSET_FILENAME"
+done
 
 /usr/bin/iconutil --convert icns --output "$RESOURCES_DIR/$ICON_NAME.icns" "$ICONSET_DIR"
 rm -rf "$ICON_WORK_DIR"
@@ -321,9 +373,14 @@ fi
 if [ -n "$SIGNING_IDENTITY" ]; then
   echo "Signing app bundle with $SIGNING_IDENTITY..."
   CODESIGN_ARGS=(--force --sign "$SIGNING_IDENTITY")
+  CODESIGN_ENTITLEMENTS_PATH="$ENTITLEMENTS_PATH"
 
-  if [ -f "$ENTITLEMENTS_PATH" ]; then
-    CODESIGN_ARGS+=(--entitlements "$ENTITLEMENTS_PATH")
+  if [ "$CREATE_APP_STORE_PACKAGE" = true ]; then
+    CODESIGN_ENTITLEMENTS_PATH="$APP_STORE_SIGNING_ENTITLEMENTS"
+  fi
+
+  if [ -f "$CODESIGN_ENTITLEMENTS_PATH" ]; then
+    CODESIGN_ARGS+=(--entitlements "$CODESIGN_ENTITLEMENTS_PATH")
   fi
 
   if [ "$CREATE_APP_STORE_PACKAGE" = false ]; then
@@ -332,6 +389,25 @@ if [ -n "$SIGNING_IDENTITY" ]; then
 
   /usr/bin/codesign "${CODESIGN_ARGS[@]}" "$APP_BUNDLE"
   /usr/bin/codesign --verify --deep --strict --verbose=2 "$APP_BUNDLE"
+
+  if [ "$CREATE_APP_STORE_PACKAGE" = true ]; then
+    SIGNED_ENTITLEMENTS_PLIST="$(mktemp "${TMPDIR:-/tmp}/paste-formatter-signed-entitlements.XXXXXX.plist")"
+    /usr/bin/codesign -d --entitlements :- "$APP_BUNDLE" > "$SIGNED_ENTITLEMENTS_PLIST" 2>/dev/null
+    SIGNED_APP_IDENTIFIER="$(
+      /usr/libexec/PlistBuddy -c "Print :com.apple.application-identifier" "$SIGNED_ENTITLEMENTS_PLIST" 2>/dev/null \
+        || true
+    )"
+    rm -f "$SIGNED_ENTITLEMENTS_PLIST"
+
+    if [ "$SIGNED_APP_IDENTIFIER" != "$PROFILE_APP_IDENTIFIER" ]; then
+      echo "Signed app entitlements do not match provisioning profile." >&2
+      echo "Signed application identifier: ${SIGNED_APP_IDENTIFIER:-unknown}" >&2
+      echo "Profile application identifier: $PROFILE_APP_IDENTIFIER" >&2
+      exit 1
+    fi
+
+    echo "Verified signed application identifier: $SIGNED_APP_IDENTIFIER"
+  fi
 else
   echo "Skipping code signing. Pass --signing-identity to sign the app bundle."
 fi
