@@ -74,13 +74,7 @@ public struct OnboardingView: View {
     }
 
     private var appIcon: some View {
-        let icon = Bundle.main.url(forResource: "OnboardingAppIcon", withExtension: "png")
-            .flatMap(NSImage.init(contentsOf:))
-            ?? Bundle.module.url(forResource: "OnboardingAppIcon", withExtension: "png")
-            .flatMap(NSImage.init(contentsOf:))
-            ?? NSImage(size: NSSize(width: 64, height: 64))
-
-        return Image(nsImage: icon)
+        return Image(nsImage: OnboardingResources.appIcon)
             .resizable()
             .frame(width: 64, height: 64)
             .accessibilityHidden(true)
@@ -263,6 +257,37 @@ private struct HelpButton: NSViewRepresentable {
         @objc func performAction() {
             action()
         }
+    }
+}
+
+private enum OnboardingResources {
+    static var appIcon: NSImage {
+        image(named: "OnboardingAppIcon", withExtension: "png")
+            ?? NSImage(size: NSSize(width: 64, height: 64))
+    }
+
+    private static func image(named name: String, withExtension fileExtension: String) -> NSImage? {
+        resourceURLs(named: name, withExtension: fileExtension)
+            .lazy
+            .compactMap(NSImage.init(contentsOf:))
+            .first
+    }
+
+    private static func resourceURLs(named name: String, withExtension fileExtension: String) -> [URL] {
+        var urls: [URL] = []
+
+        if let resourceURL = Bundle.main.url(forResource: name, withExtension: fileExtension) {
+            urls.append(resourceURL)
+        }
+
+        for containerURL in [Bundle.main.resourceURL, Bundle.main.bundleURL].compactMap(\.self) {
+            let bundleURL = containerURL.appendingPathComponent("paste-formatter_PasteFormatterUI.bundle")
+            if let resourceURL = Bundle(url: bundleURL)?.url(forResource: name, withExtension: fileExtension) {
+                urls.append(resourceURL)
+            }
+        }
+
+        return urls
     }
 }
 

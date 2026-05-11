@@ -18,6 +18,7 @@ PRIVACY_MANIFEST="$ROOT_DIR/PrivacyInfo.xcprivacy"
 ICON_NAME="AppIcon"
 ICON_APPICONSET_DIR="$ROOT_DIR/Assets.xcassets/$ICON_NAME.appiconset"
 MENU_BAR_ICON_SOURCE_PATH="$ROOT_DIR/Assets/MenuBarIcon.png"
+SWIFTPM_RESOURCE_BUNDLE_NAME="paste-formatter_PasteFormatterUI.bundle"
 NOTARIZATION_ZIP="$DIST_DIR/$APP_NAME-notarization.zip"
 MARKETING_VERSION="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$INFO_TEMPLATE")"
 RELEASE_ZIP="$DIST_DIR/$APP_NAME $MARKETING_VERSION.zip"
@@ -350,8 +351,41 @@ fi
 
 while IFS= read -r RESOURCE_BUNDLE; do
   echo "Copying resources from $(basename "$RESOURCE_BUNDLE")..."
-  find "$RESOURCE_BUNDLE" -maxdepth 1 -type f -exec cp {} "$RESOURCES_DIR/" \;
+  RESOURCE_BUNDLE_DESTINATION="$RESOURCES_DIR/$(basename "$RESOURCE_BUNDLE")"
+  rm -rf "$RESOURCE_BUNDLE_DESTINATION"
+  ditto "$RESOURCE_BUNDLE" "$RESOURCE_BUNDLE_DESTINATION"
+
+  for RESOURCE_BUNDLE_INFO_PLIST in \
+    "$RESOURCE_BUNDLE_DESTINATION/Contents/Info.plist" \
+    "$RESOURCE_BUNDLE_DESTINATION/Info.plist"; do
+    if [ ! -f "$RESOURCE_BUNDLE_INFO_PLIST" ]; then
+      continue
+    fi
+
+    RESOURCE_BUNDLE_EXECUTABLE="$(
+      /usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$RESOURCE_BUNDLE_INFO_PLIST" 2>/dev/null \
+        || true
+    )"
+
+    if [ -n "$RESOURCE_BUNDLE_EXECUTABLE" ] \
+      && [ ! -f "$RESOURCE_BUNDLE_DESTINATION/Contents/MacOS/$RESOURCE_BUNDLE_EXECUTABLE" ] \
+      && [ ! -f "$RESOURCE_BUNDLE_DESTINATION/$RESOURCE_BUNDLE_EXECUTABLE" ]; then
+      /usr/libexec/PlistBuddy -c "Delete :CFBundleExecutable" "$RESOURCE_BUNDLE_INFO_PLIST"
+    fi
+  done
 done < <(find "$(dirname "$EXECUTABLE_PATH")" -maxdepth 1 -name "*.bundle" -type d)
+
+SWIFTPM_RESOURCE_BUNDLE_PATH="$RESOURCES_DIR/$SWIFTPM_RESOURCE_BUNDLE_NAME"
+if [ ! -d "$SWIFTPM_RESOURCE_BUNDLE_PATH" ]; then
+  echo "Missing SwiftPM resource bundle in app resources: $SWIFTPM_RESOURCE_BUNDLE_PATH" >&2
+  exit 1
+fi
+
+if [ ! -f "$SWIFTPM_RESOURCE_BUNDLE_PATH/OnboardingAppIcon.png" ] \
+  && [ ! -f "$SWIFTPM_RESOURCE_BUNDLE_PATH/Contents/Resources/OnboardingAppIcon.png" ]; then
+  echo "Missing onboarding icon in SwiftPM resource bundle: $SWIFTPM_RESOURCE_BUNDLE_PATH" >&2
+  exit 1
+fi
 
 if [ -n "$PROVISIONING_PROFILE" ]; then
   cp "$PROVISIONING_PROFILE" "$CONTENTS_DIR/embedded.provisionprofile"
