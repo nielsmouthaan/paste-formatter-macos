@@ -118,7 +118,7 @@ if [ -z "$BUNDLE_IDENTIFIER" ]; then
 fi
 
 echo "Building release executable..."
-xcodebuildmcp swift-package build --package-path "$ROOT_DIR" --configuration release
+swift build --package-path "$ROOT_DIR" --configuration release
 
 EXECUTABLE_PATH="$(find "$ROOT_DIR/.build" -path "*/release/$EXECUTABLE_TARGET" -type f ! -path "$ROOT_DIR/.build/apple/*" | head -n 1)"
 

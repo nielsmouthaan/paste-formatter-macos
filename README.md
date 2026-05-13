@@ -30,7 +30,7 @@ To build your own copy, check out this repository, ensure you have [Xcode](https
 ./scripts/build-app.sh --bundle-identifier <BUNDLE_IDENTIFIER>
 ```
 
-This creates `dist/Paste Formatter.app`.
+This creates an unsigned app at `dist/Paste Formatter.app` using the provided bundle identifier. Optionally pass `--signing-identity` to create a signed version.
 
 To sign the app bundle as well, pass the name of a code signing identity available in your local keychain:
 
