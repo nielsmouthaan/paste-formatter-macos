@@ -247,6 +247,21 @@ chmod 755 "$MACOS_DIR/$EXECUTABLE_NAME"
 /usr/bin/xattr -cr "$APP_BUNDLE"
 
 if [ -n "$SIGNING_IDENTITY" ]; then
+  echo "Signing Sparkle helper tools with $SIGNING_IDENTITY..."
+  SPARKLE_BUNDLE_PATH="$FRAMEWORKS_DIR/Sparkle.framework/Versions/B"
+  SPARKLE_SIGN_PATHS=(
+    "$SPARKLE_BUNDLE_PATH/Autoupdate"
+    "$SPARKLE_BUNDLE_PATH/XPCServices/Downloader.xpc"
+    "$SPARKLE_BUNDLE_PATH/XPCServices/Installer.xpc"
+    "$SPARKLE_BUNDLE_PATH/Updater.app"
+  )
+
+  for SPARKLE_SIGN_PATH in "${SPARKLE_SIGN_PATHS[@]}"; do
+    if [ -e "$SPARKLE_SIGN_PATH" ]; then
+      /usr/bin/codesign --force --sign "$SIGNING_IDENTITY" --options runtime --timestamp "$SPARKLE_SIGN_PATH"
+    fi
+  done
+
   echo "Signing bundled frameworks with $SIGNING_IDENTITY..."
   while IFS= read -r FRAMEWORK_PATH; do
     /usr/bin/codesign --force --sign "$SIGNING_IDENTITY" --options runtime --timestamp "$FRAMEWORK_PATH"
