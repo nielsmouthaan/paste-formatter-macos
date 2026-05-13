@@ -20,7 +20,7 @@ To paste directly into the active app, Paste Formatter uses macOS Accessibility 
 
 ## Download
 
-[Get Paste Formatter](https://paste-formatter.app/get) or build it yourself from this repository.
+[Get Paste Formatter](https://paste-formatter.app) or build it yourself from this repository.
 
 ## Build
 
