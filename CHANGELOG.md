@@ -12,3 +12,4 @@ Initial version
 - Added the ability to change the default keyboard shortcut for pasting
 - Added launch at login
 - Added the ability to preserve paragraph breaks when pasting into text-only fields
+- Added Sparkle-based update checks for direct distribution

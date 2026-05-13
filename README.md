@@ -20,7 +20,7 @@ To paste directly into the active app, Paste Formatter uses macOS Accessibility 
 
 ## Download
 
-[Get Paste Formatter](https://paste-formatter.app) from the Mac App Store.
+[Get Paste Formatter](https://paste-formatter.app/get) or build it yourself from this repository.
 
 ## Build
 
@@ -38,27 +38,6 @@ To sign the app bundle as well, pass the name of a code signing identity availab
 ./scripts/build-app.sh \
   --bundle-identifier <BUNDLE_IDENTIFIER> \
   --signing-identity "<SIGNING_IDENTITY>"
-```
-
-To create a zipped notarized release build, use:
-
-```bash
-./scripts/build-app.sh \
-  --bundle-identifier <BUNDLE_IDENTIFIER> \
-  --signing-identity "<SIGNING_IDENTITY>" \
-  --notarize \
-  --release-zip
-```
-
-To create a signed Mac App Store installer package, use:
-
-```bash
-./scripts/build-app.sh \
-  --bundle-identifier <BUNDLE_IDENTIFIER> \
-  --signing-identity "3rd Party Mac Developer Application: <NAME> (<TEAMID>)" \
-  --installer-signing-identity "3rd Party Mac Developer Installer: <NAME> (<TEAMID>)" \
-  --provisioning-profile "<PROFILE.provisionprofile>" \
-  --app-store-package
 ```
 
 ## FAQ & Support

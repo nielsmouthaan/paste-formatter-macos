@@ -34,5 +34,13 @@
 	<string>© 2026 Niels Mouthaan</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>SUAllowsAutomaticUpdates</key>
+	<false/>
+	<key>SUEnableAutomaticChecks</key>
+	<false/>
+	<key>SUFeedURL</key>
+	<string>https://paste-formatter.app/updates/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>fy/9YnZ9gRlWHEkoBySzT+CdC7etOuQq4DW+vJSUaK0=</string>
 </dict>
 </plist>

@@ -13,6 +13,7 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
     private let applyShortcut: @MainActor (KeyboardShortcut) -> Bool
     private let suspendShortcut: @MainActor () -> Void
     private let resumeShortcut: @MainActor () -> Void
+    private let checkForUpdates: @MainActor () -> Void
     private let shortcutRecorder: KeyboardShortcutRecorder
     private let repositoryURL = URL(string: "https://github.com/nielsmouthaan/paste-formatter")!
 
@@ -73,7 +74,8 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
         applyShortcut: @escaping @MainActor (KeyboardShortcut) -> Bool,
         canRegisterShortcut: @escaping @MainActor (KeyboardShortcut) -> Bool,
         suspendShortcut: @escaping @MainActor () -> Void,
-        resumeShortcut: @escaping @MainActor () -> Void
+        resumeShortcut: @escaping @MainActor () -> Void,
+        checkForUpdates: @escaping @MainActor () -> Void
     ) {
         self.settingsStore = settingsStore
         self.pasteboardService = pasteboardService
@@ -82,6 +84,7 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
         self.applyShortcut = applyShortcut
         self.suspendShortcut = suspendShortcut
         self.resumeShortcut = resumeShortcut
+        self.checkForUpdates = checkForUpdates
         self.shortcutRecorder = KeyboardShortcutRecorder(isShortcutAvailable: canRegisterShortcut)
     }
 
@@ -209,6 +212,10 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
         let aboutItem = NSMenuItem(title: "About Paste Formatter", action: #selector(handleAbout), keyEquivalent: "")
         aboutItem.target = self
         menu.addItem(aboutItem)
+
+        let checkForUpdatesItem = NSMenuItem(title: "Check for Updates...", action: #selector(handleCheckForUpdates), keyEquivalent: "")
+        checkForUpdatesItem.target = self
+        menu.addItem(checkForUpdatesItem)
 
         let quitItem = NSMenuItem(title: "Quit Paste Formatter", action: #selector(handleQuit), keyEquivalent: "q")
         quitItem.target = self
@@ -394,6 +401,10 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
 
     @objc private func handleAbout() {
         NSWorkspace.shared.open(repositoryURL)
+    }
+
+    @objc private func handleCheckForUpdates() {
+        checkForUpdates()
     }
 
     @objc private func handleQuit() {

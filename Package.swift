@@ -21,6 +21,9 @@ let package = Package(
             targets: ["PasteFormatter"]
         )
     ],
+    dependencies: [
+        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.9.0")
+    ],
     targets: [
         .target(
             name: "PasteFormatterCore",
@@ -35,7 +38,11 @@ let package = Package(
         ),
         .executableTarget(
             name: "PasteFormatter",
-            dependencies: ["PasteFormatterCore", "PasteFormatterUI"],
+            dependencies: [
+                "PasteFormatterCore",
+                "PasteFormatterUI",
+                .product(name: "Sparkle", package: "Sparkle")
+            ],
             path: "Sources/PasteFormatter"
         ),
         .testTarget(

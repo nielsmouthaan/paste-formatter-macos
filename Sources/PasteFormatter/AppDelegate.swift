@@ -5,12 +5,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusMenuController: StatusMenuController?
     private var hotKeyMonitor: HotKeyMonitor?
     private var onboardingWindowController: OnboardingWindowController?
+    private var updateController: UpdateController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let settingsStore = SettingsStore()
         let pasteboardService = PasteboardService()
         let pasteExecutor = PasteActionExecutor()
         let launchAtLoginService = LaunchAtLoginService()
+        let updateController = UpdateController()
 
         var statusMenuController: StatusMenuController?
         let hotKeyMonitor = HotKeyMonitor {
@@ -33,11 +35,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             },
             resumeShortcut: {
                 hotKeyMonitor.resumeShortcut()
+            },
+            checkForUpdates: {
+                updateController.checkForUpdates()
             }
         )
         controller.start()
         statusMenuController = controller
         self.statusMenuController = controller
+        updateController.start()
+        self.updateController = updateController
 
         hotKeyMonitor.start(with: settingsStore.keyboardShortcut)
         self.hotKeyMonitor = hotKeyMonitor
